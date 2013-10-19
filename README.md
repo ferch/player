@@ -1,4 +1,4 @@
 player
 ======
 
-just plyer
+just player
