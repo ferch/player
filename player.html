@@ -1,0 +1,175 @@
+ <html>
+ <head>
+ 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+ 	<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+ 	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+ 	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+ 	
+ </head>
+ <body>
+	<audio id="audio1" ></audio>	
+	<input id="previous" type="button" value="previous"></input>
+	<input id="pauseOrplay" type="button" value="control"></input>
+	<input id="next" type="button" value="next"></input>
+	<div id="control"></div>
+	<div id="vol"></div>
+	<ul id="playlist"></ul>
+</body>
+<script type="text/javascript">
+	(function($){
+		var playlist = [
+						{
+							title: '云的衣裳',
+							artist: '拇指姑娘',
+							album: '青春啊，摇篮',
+							cover: 'cover/伤花怒放.jpg',
+							mp3: 'http://mr3.douban.com/201310082015/928a280749e458a26684fc14d1aae455/view/musicianmp3/mp3/x11240446.mp3',
+							ogg: 'music/tell_your_world.ogg'
+						},{
+							title: ' 花边下',
+							artist: '拇指姑娘',
+							album: '青春啊，摇篮',
+							cover: 'cover/伤花怒放.jpg',
+							mp3: 'http://mr3.douban.com/201310082015/5e46c3578dfaa503a31c6136af8bed61/view/musicianmp3/mp3/x10494867.mp3',
+							ogg: 'music/tell_your_world.ogg'
+						},{
+							title: '亲爱的苏',
+							artist: '拇指姑娘',
+							album: '青春啊，摇篮',
+							cover: 'cover/伤花怒放.jpg',
+							mp3: 'http://mr3.douban.com/201310082015/aa305d97d1e3520c5b2cec2b60dda2b5/view/musicianmp3/mp3/x13614175.mp3',
+							ogg: 'music/tell_your_world.ogg'
+						}
+					];
+		var audio = $("#audio1");
+		var currentTrack = 0;//当前曲目标记位
+		var isPlaying;      //是否正在播放
+		var timeout;
+		//play
+		var play =function (){
+			audio[0].play();
+			timeout = setInterval(updateProgress, 500);
+			isPlaying = true;
+		}
+
+		//pause
+		var pause = function(){
+			audio[0].pause();
+			clearInterval(timeout);
+			isPlaying = false;
+
+		}
+		//播放和暂停控制
+		$("#pauseOrplay").on('click',function(){
+			isPlaying = audio[0].paused;
+			if(isPlaying){
+				play();
+			}else{
+				pause();
+			}
+				
+		})
+	
+		//加载playlist
+		for(var i=0;i<playlist.length;i++){
+			//创建list节点
+			var ilist = playlist[i];
+			$("#playlist").append('<li>'+ilist.artist+'--'+ilist.title+'</li>');
+
+		}
+		//绑定单击事件
+		$("#playlist li").each(function(i){
+			var  i1 = i;
+			$(this).on("click",function(){
+				swich(i1);
+			})
+		})
+		//加载歌曲的信息到audio结点
+		function loadInformation(i){
+			var information = playlist[i];
+			audio.attr("src",playlist[i].mp3);
+			//其他专辑封面，人物等先不写
+
+		}
+
+		//切换曲目加载方法
+		function swich(i){
+			if(i<0){
+				track = currentTrack = playlist.length-1;
+			}else if(i>=playlist.length){
+				track = currentTrack =0;
+			}else {
+				track = i;
+			}			
+			loadInformation(track);
+			play();
+			
+		}
+		//上一曲
+		$("#previous").on("click",function(){
+			swich(--currentTrack);
+		})
+
+		//下一首
+		$("#next").on("click",function(){
+			swich(++currentTrack)
+		})
+		
+		//播放进度条
+		$( "#control" ).slider({
+			step: 0.1,
+			slide: function(event, ui){
+				setProgress(audio.duration * ui.value / 100);
+				clearInterval(timeout);		//消除定时执行，防止拖动条自动回到原点		
+			},
+			stop: function(event,ui){
+				audio[0].currentTime = audio[0].duration * ui.value / 100;
+				timeout = setInterval(updateProgress, 500); //定时执行拖动指针的方法
+			}
+		});
+
+		var setProgress = function(value){
+			var ratio = value / audio[0].duration * 100;			
+			$('#control a').css('left', ratio + '%');
+		}
+
+		var updateProgress = function(){
+			setProgress(audio[0].currentTime);
+		}
+
+		
+		
+		//音量控制条
+		var setVolume = function(value){
+			audio[0].volume= value;
+		
+		}
+		var volume = 0.5;//初始音量
+		$('#vol').slider({
+			max: 1, 
+			min: 0,
+			step: 0.01,
+			value: volume,
+			slide: function(event, ui){
+				setVolume(ui.value);	
+			}, 
+			
+		})
+
+		//默认加载第一首歌曲
+		if(audio.src==null){
+			swich(currentTrack);
+		}
+		//顺序播放，播放完进去下一首
+		setInterval(autoNext,1000);//此处注意不要括号
+		function autoNext(){
+				if(audio[0].ended){
+				swich(++currentTrack);
+			}
+		}
+
+		
+
+	})(jQuery)
+</script>
+</html>
